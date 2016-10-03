@@ -1,0 +1,11 @@
+{
+  "name": "lambda_logger",
+  "version": "1.0.0",
+  "description": "Lambda logger",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sergey Andronnikov <sandronnikov@gmail.com>",
+  "license": "ISC"
+}

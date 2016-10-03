@@ -1,0 +1,446 @@
+/**
+ * @author Sergey Andronnikov
+ * @param event
+ * @param context
+ *
+ *
+ *
+ --- INIT
+
+ , lambdaLogger = require('lambda_logger')
+
+ var logger = new lambdaLogger(event, context);
+
+ --- LAMBDA DONE
+ logger.done(error, result);
+
+ --- COMMON WARNING
+ logger.logWarning(logger.constants.LOG_TYPE_SNS, 'Unable to publish', error);
+
+
+ ------------- LAMBDA --------------
+
+ var preLambdaDate = new Date();
+
+ --- ANY
+ logger.logLambdaInvoke(lambdaParams, error, data, preLambdaDate);
+
+ --- ERROR
+ logger.logLambdaError(lambdaParams, error);
+
+ ---WARNING
+ logger.logLambdaWarning(lambdaParams, error);
+
+
+
+ ------------- SNS --------------
+ var preSNSDate = new Date();
+ var snsMessage = {};
+
+ --- ANY
+ logger.sns.logPublish(snsMessage, error, data, preSNSDate);
+
+ --- WARNING
+ logger.sns.logWarning(snsMessage, error);
+
+
+ ------------- DB --------------
+
+ var preQueryDate = new Date();
+ var requestConfig = {};
+
+ requestConfig, function(error, response, body)
+ --- ANY
+ logger.mongo.logGetRequest(requestConfig, error, response, body, preQueryDate);
+ logger.mongo.logPostRequest(requestConfig, error, response, body, preQueryDate);
+ logger.mongo.logPatchRequest(requestConfig, error, response, body, preQueryDate);
+ *
+ */
+
+var util = require('util');
+
+const LOG_TYPE_AWS = 'aws';
+const LOG_TYPE_MONGO = 'mongo';
+const LOG_TYPE_LAMBDA = 'lambda';
+const LOG_TYPE_SNS = 'sns';
+
+const LOG_METHOD_LAMBDA_INVOKE = 'call';
+const LOG_METHOD_SNS = 'sns';
+const LOG_METHOD_MONGO_GET = 'get';
+const LOG_METHOD_MONGO_POST = 'post';
+const LOG_METHOD_MONGO_PATCH = 'patch';
+
+/**
+ * Lambda Logger
+ * @param event
+ * @param context
+ * @param detailed
+ */
+var lambdaLogger = function (event, context, detailed) {
+    "use strict";
+    lambdaLogger.prototype.event = event;
+    lambdaLogger.prototype.context = context;
+
+    lambdaLogger.prototype.inData = {
+        inData: {
+            startDateTime: new Date(),
+            name: lambdaLogger.prototype.context.functionName,
+            payload: lambdaLogger.prototype.event,
+            lambdaContext: lambdaLogger.prototype.context
+        }
+    };
+
+    if (detailed && detailed === true) {
+        var headerString = event.inputParams;
+        if (headerString && headerString.length > 0) {
+            var startPosition = headerString.toLowerCase().indexOf("accept=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.acceptString = headerString.substring(startPosition + 7, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("cloudfront-is-desktop-viewer=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isDesktop = headerString.substring(startPosition + 29, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            startPosition = headerString.toLowerCase().indexOf("cloudfront-is-mobile-viewer=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isMobile = headerString.substring(startPosition + 28, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            startPosition = headerString.toLowerCase().indexOf("cloudfront-is-smarttv-viewer=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isSmartTV = headerString.substring(startPosition + 29, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            startPosition = headerString.toLowerCase().indexOf("cloudfront-is-tablet-viewer=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isTablet = headerString.substring(startPosition + 28, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            startPosition = headerString.toLowerCase().indexOf("cloudfront-viewer-country=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.countryCode = headerString.substring(startPosition + 26, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("content-type=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.contentType = headerString.substring(startPosition + 13, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("host=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.host = headerString.substring(startPosition + 5, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("user-agent=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.userAgent = headerString.substring(startPosition + 11, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("via=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.via = headerString.substring(startPosition + 4, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("x-amz-cf-id=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.cloudFrontId = headerString.substring(startPosition + 12, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("x-amz-date=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.amazonDateTime = headerString.substring(startPosition + 11, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf("x-api-key=");
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.apiKey = headerString.substring(startPosition + 10, headerString.indexOf(',', startPosition));
+            startPosition = headerString.toLowerCase().indexOf('x-forwarded-for=');
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.forwardedFor = headerString.substring(startPosition + 16, headerString.toLowerCase().indexOf(', x', startPosition));
+        }
+    }
+
+    lambdaLogger.prototype.metaData = {
+        metaData: {
+        }
+    };
+
+    lambdaLogger.prototype.outData = {
+        outData: {
+            warnings: []
+        }
+    };
+
+    console.log(JSON.stringify(lambdaLogger.prototype.inData));
+
+    lambdaLogger.prototype._logMetaData = function _logMetaData () {
+        lambdaLogger.prototype.metaData.metaData.name = lambdaLogger.prototype.inData.inData.name;
+        lambdaLogger.prototype.metaData.metaData.startDateTime = lambdaLogger.prototype.inData.inData.startDateTime;
+        lambdaLogger.prototype.metaData.metaData.endDateTime = new Date();
+        console.log(JSON.stringify(lambdaLogger.prototype.metaData));
+    }
+};
+
+/**
+ * Lambda context done handler
+ * @param error
+ * @param result
+ */
+lambdaLogger.prototype.done = function done(error, result) {
+    "use strict";
+    if (error) {
+        lambdaLogger.prototype.fail(error, result);
+    } else {
+        lambdaLogger.prototype.succeed(error, result);
+    }
+};
+
+/**
+ * Lambda context fail handler
+ * @param error
+ * @param result
+ * @param outPayload
+ */
+lambdaLogger.prototype.fail = function (error, result, outPayload) {
+    "use strict";
+    if (!outPayload) {
+        outPayload = 'Bad Request: ' + (error.message ? error.message : error);
+    }
+    lambdaLogger.prototype.outData.outData = Object.assign(
+        lambdaLogger.prototype.outData.outData,
+        {
+            payload: outPayload,
+            status: 'error',
+            errorMessage: 'LAMBDA_FATAL',
+            errorObject: error,
+            startDateTime: lambdaLogger.prototype.inData.inData.startDateTime,
+            endDateTime: new Date()
+        }
+    );
+
+    lambdaLogger.prototype._logMetaData();
+    console.log(JSON.stringify(lambdaLogger.prototype.outData));
+    lambdaLogger.prototype.context.done(outPayload);
+};
+
+/**
+ * Lambda context succeed handler
+ * @param error
+ * @param result
+ */
+lambdaLogger.prototype.succeed = function (error, result) {
+    "use strict";
+    lambdaLogger.prototype.outData.outData = Object.assign(
+        lambdaLogger.prototype.outData.outData,
+        {
+            payload: result,
+            status: 'success',
+            startDateTime: lambdaLogger.prototype.inData.inData.startDateTime,
+            endDateTime: new Date()
+        }
+    );
+    lambdaLogger.prototype._logMetaData();
+    console.log(JSON.stringify(lambdaLogger.prototype.outData));
+    lambdaLogger.prototype.context.done(null, result);
+};
+
+
+/**
+ * Log start of lambda method
+ * @param functionName
+ * @param params
+ */
+lambdaLogger.prototype.logStartFunction = function (functionName, params) {
+    "use strict";
+    if (params) {
+        console.log(util.format('RUN "%s"; PARAMS: %j', functionName, params));
+    } else {
+        console.log(util.format('RUN "%s"', functionName));
+    }
+};
+
+lambdaLogger.prototype.logSimpleMessage = function () {
+    "use strict";
+    console.log.apply(this, arguments);
+};
+
+/** -------- LAMBDAS SECTION ------------ */
+/**
+ * Log lambda invoke result
+ * @param lambdaParams
+ * @param error
+ * @param data
+ * @param preLambdaDate
+ */
+lambdaLogger.prototype.logLambdaInvoke = function logLambdaInvoke(lambdaParams, error, data, preLambdaDate) {
+    "use strict";
+    console.log(JSON.stringify({
+        callData: {
+            type: LOG_TYPE_LAMBDA,
+            method: LOG_METHOD_LAMBDA_INVOKE,
+            startDateTime: preLambdaDate,
+            endDateTime: new Date(),
+            functionName: lambdaParams.FunctionName,
+            qualifier: lambdaParams.Qualifier,
+            payload: JSON.parse(lambdaParams.Payload),
+            lambdaError: error,
+            lambdaData: data
+        }
+    }));
+};
+
+/**
+ * Log Custom type warning
+ * @param type
+ * @param message
+ * @param error
+ */
+lambdaLogger.prototype.logWarning = function (type, message, error) {
+    "use strict";
+    var logObject = {
+        type: type,
+        messages: message
+    };
+    if (error) {
+        logObject.messageObject = error;
+    }
+    lambdaLogger.prototype.outData.outData.warnings.push(logObject);
+};
+
+/**
+ * Log lambda invoke warning
+ * @param lambdaParams
+ * @param error
+ */
+lambdaLogger.prototype.logLambdaWarning = function (lambdaParams, error) {
+    "use strict";
+    lambdaLogger.prototype.logWarning(
+        LOG_TYPE_LAMBDA,
+        'LAMBDA_WARNING: ' + lambdaParams.FunctionName + ' function',
+        error
+    );
+};
+
+
+var lambdaFunctionsLogger = {
+    logInvoke: function (lambdaParams, error, data, preLambdaDate) {
+        "use strict";
+        lambdaLogger.prototype.logLambdaInvoke(lambdaParams, error, data, preLambdaDate);
+    },
+    logWarning: function (lambdaParams, error) {
+        "use strict";
+        lambdaLogger.prototype.logLambdaWarning(lambdaParams, error);
+    }
+};
+
+lambdaLogger.prototype.lambda = lambdaFunctionsLogger;
+
+
+/** -------- SNS SECTION ------------ */
+
+/**
+ * SNS Logger
+ * @type {{logPublish: snsLogger.logPublish, logWarning: snsLogger.logWarning}}
+ */
+var snsLogger = {
+    /**
+     *
+     * @param snsMessage
+     * @param error
+     * @param data
+     * @param preSNSDate
+     */
+    logPublish: function(snsMessage, error, data, preSNSDate) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_AWS,
+                method: LOG_METHOD_SNS,
+                startDateTime: preSNSDate,
+                endDateTime: new Date(),
+                topicArn: snsMessage.TopicArn,
+                snsMessage: snsMessage.Message,
+                snsSubject: snsMessage.Subject,
+                snsError: error,
+                snsResponse: data
+            }
+        }));
+    },
+    /**
+     * Log SNS warning
+     * @param snsMessage
+     * @param error
+     */
+    logWarning: function(snsMessage, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_METHOD_SNS,
+            'LAMBDA_WARNING: Error sending SNS "' + snsMessage.Subject + '" message',
+            error
+        );
+    }
+};
+
+lambdaLogger.prototype.sns = snsLogger;
+
+
+/** -------- MONGO SECTION ------------ */
+/**
+ * Logger for mongo
+ * @type {{logRequest: mongoLogger.logRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
+ */
+var mongoLogger = {
+    /**
+     * Log Mongo Request
+     * @param requestConfig
+     * @param method
+     * @param error
+     * @param response
+     * @param body
+     * @param preQueryDate
+     */
+    logRequest: function(requestConfig, method, error, response, body, preQueryDate) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_MONGO,
+                method: method,
+                startDateTime: preQueryDate,
+                endDateTime: new Date(),
+                requestUri: requestConfig.uri,
+                requestHeaders: requestConfig.headers,
+                responseStatusCode: response ? response.statusCode : null,
+                responseError: error,
+                responseBody: body || response.body
+            }
+        }));
+    },
+    /**
+     * Log GET requests
+     * @param requestConfig
+     * @param error
+     * @param response
+     * @param body
+     * @param preQueryDate
+     */
+    logGetRequest: function (requestConfig, error, response, body, preQueryDate) {
+        "use strict";
+        this.logRequest(requestConfig, LOG_METHOD_MONGO_GET, error, response, body, preQueryDate);
+    },
+    /**
+     * Log POST requests
+     * @param requestConfig
+     * @param error
+     * @param response
+     * @param body
+     * @param preQueryDate
+     */
+    logPostRequest: function (requestConfig, error, response, body, preQueryDate) {
+        "use strict";
+        this.logRequest(requestConfig, LOG_METHOD_MONGO_POST, error, response, body, preQueryDate);
+    },
+    /**
+     * Log Patch requests
+     * @param requestConfig
+     * @param error
+     * @param response
+     * @param body
+     * @param preQueryDate
+     */
+    logPatchRequest: function (requestConfig, error, response, body, preQueryDate) {
+        "use strict";
+        this.logRequest(requestConfig, LOG_METHOD_MONGO_PATCH, error, response, body, preQueryDate);
+    },
+    /**
+     * Log Mongo warning
+     * @param requestConfig
+     * @param error
+     */
+    logWarning: function(requestConfig, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_TYPE_MONGO,
+            'LAMBDA_WARNING: Error DB "' + requestConfig.uri + '" request',
+            error
+        );
+    }
+};
+
+lambdaLogger.prototype.mongo = mongoLogger;
+
+
+/** -------- CONST SECTION ------------ */
+var constantsObject = Object.freeze({
+    LOG_TYPE_AWS: LOG_TYPE_AWS,
+    LOG_TYPE_MONGO: LOG_TYPE_MONGO,
+    LOG_TYPE_LAMBDA: LOG_TYPE_LAMBDA,
+    LOG_TYPE_SNS: LOG_TYPE_SNS
+});
+
+lambdaLogger.prototype.constants = constantsObject;
+
+module.exports = lambdaLogger;
