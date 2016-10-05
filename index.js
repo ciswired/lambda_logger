@@ -72,8 +72,9 @@ const LOG_METHOD_MONGO_GET = 'get';
 const LOG_METHOD_MONGO_POST = 'post';
 const LOG_METHOD_MONGO_PATCH = 'patch';
 
-const LOG_METHOD_COGNITO_GETID = 'getId';
-const LOG_METHOD_COGNITO_GETOPENID = 'getOpenIdTokenForDeveloperIdentity';
+const LOG_METHOD_COGNITO_GET_ID = 'getId';
+const LOG_METHOD_COGNITO_GET_OPENID = 'getOpenIdTokenForDeveloperIdentity';
+const LOG_METHOD_COGNITO_GET_CREDENTIALS = 'getCredentialsForIdentity';
 
 
 /**
@@ -476,8 +477,9 @@ var cognitoLogger = {
      * @param preCognitoDate
      */
     logGetId: function(cognitoParameters, error, response, preCognitoDate) {
-        this.logRequest(LOG_METHOD_COGNITO_GETID, cognitoParameters, error, response, preCognitoDate);
+        this.logRequest(LOG_METHOD_COGNITO_GET_ID, cognitoParameters, error, response, preCognitoDate);
     },
+
     /**
      * Log "getOpenIdTokenForDeveloperIdentity" request
      * @param cognitoParameters
@@ -486,7 +488,18 @@ var cognitoLogger = {
      * @param preCognitoDate
      */
     logGetOpenId: function(cognitoParameters, error, response, preCognitoDate) {
-        this.logRequest(LOG_METHOD_COGNITO_GETOPENID, cognitoParameters, error, response, preCognitoDate);
+        this.logRequest(LOG_METHOD_COGNITO_GET_OPENID, cognitoParameters, error, response, preCognitoDate);
+    },
+
+    /**
+     * Log "getCredentialsForIdentity" request
+     * @param cognitoParameters
+     * @param error
+     * @param response
+     * @param preCognitoDate
+     */
+    logGetCredentialsForIdentity: function(cognitoParameters, error, response, preCognitoDate) {
+        this.logRequest(LOG_METHOD_COGNITO_GET_CREDENTIALS, cognitoParameters, error, response, preCognitoDate);
     },
 
     /**
