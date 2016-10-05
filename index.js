@@ -63,6 +63,7 @@ const LOG_TYPE_AWS = 'aws';
 const LOG_TYPE_MONGO = 'mongo';
 const LOG_TYPE_LAMBDA = 'lambda';
 const LOG_TYPE_SNS = 'sns';
+const LOG_TYPE_COGNITO = 'cognito';
 
 const LOG_METHOD_LAMBDA_INVOKE = 'call';
 const LOG_METHOD_SNS = 'sns';
@@ -433,12 +434,59 @@ var mongoLogger = {
 lambdaLogger.prototype.mongo = mongoLogger;
 
 
+/** -------- COGNITO SECTION ------------ */
+
+/**
+ * COGNITO Logger
+ * @type {{logPublish: cognitoLogger.logGetId, logWarning: cognitoLogger.logWarning}}
+ */
+var cognitoLogger = {
+    /**
+     *
+     * @param cognitoParameters
+     * @param error
+     * @param data
+     * @param preCognitoDate
+     */
+    logGetId: function(cognitoParameters, error, response, preCognitoDate) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_COGNITO,
+                method: 'getId',
+                startDateTime: preCognitoDate,
+                endDateTime: new Date(),
+                cognitoParameters: cognitoParameters,
+                cognitoError: error,
+                cogniroResponse: response
+            }
+        }));
+    },
+    /**
+     * Log COGNITO warning
+     * @param cognitoParameters
+     * @param error
+     */
+    logWarning: function(cognitoParameters, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_TYPE_COGNITO,
+            'LAMBDA_WARNING: Error COGNITO "' + cognitoParameters.IdentityPoolId + '" poll',
+            error
+        );
+    }
+};
+
+lambdaLogger.prototype.cognito = cognitoLogger;
+
+
 /** -------- CONST SECTION ------------ */
 var constantsObject = Object.freeze({
     LOG_TYPE_AWS: LOG_TYPE_AWS,
     LOG_TYPE_MONGO: LOG_TYPE_MONGO,
     LOG_TYPE_LAMBDA: LOG_TYPE_LAMBDA,
-    LOG_TYPE_SNS: LOG_TYPE_SNS
+    LOG_TYPE_SNS: LOG_TYPE_SNS,
+    LOG_TYPE_COGNITO: LOG_TYPE_COGNITO
 });
 
 lambdaLogger.prototype.constants = constantsObject;
