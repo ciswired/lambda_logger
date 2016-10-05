@@ -443,8 +443,8 @@ lambdaLogger.prototype.mongo = mongoLogger;
 /** -------- COGNITO SECTION ------------ */
 
 /**
- * COGNITO Logger
- * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logWarning: cognitoLogger.logWarning}}
+ * COGNITO logger
+ * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logGetCredentialsForIdentity: cognitoLogger.logGetCredentialsForIdentity, logWarning: cognitoLogger.logWarning}}
  */
 var cognitoLogger = {
     /**
