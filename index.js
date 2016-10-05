@@ -524,7 +524,7 @@ lambdaLogger.prototype.cognito = cognitoLogger;
 /** -------- PubNub SECTION ------------ */
 /**
  *
- * @type {{logRequest: pubNubLogger.logRequest, logPublishCallBack: pubNubLogger.logPublishCallBack, logPublishError: pubNubLogger.logPublishError}}
+ * @type {{logRequest: pubNubLogger.logRequest, logPublishCallBack: pubNubLogger.logPublishCallBack, logPublishError: pubNubLogger.logPublishError, logWarning: pubNubLogger.logWarning}}
  */
 var pubNubLogger = {
 
