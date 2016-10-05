@@ -444,7 +444,7 @@ lambdaLogger.prototype.mongo = mongoLogger;
 
 /**
  * COGNITO logger
- * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logGetCredentialsForIdentity: cognitoLogger.logGetCredentialsForIdentity, logWarning: cognitoLogger.logWarning}}
+ * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logGetCredentials: cognitoLogger.logGetCredentials, logWarning: cognitoLogger.logWarning}}
  */
 var cognitoLogger = {
     /**
@@ -498,7 +498,7 @@ var cognitoLogger = {
      * @param response
      * @param preCognitoDate
      */
-    logGetCredentialsForIdentity: function(cognitoParameters, error, response, preCognitoDate) {
+    logGetCredentials: function(cognitoParameters, error, response, preCognitoDate) {
         this.logRequest(LOG_METHOD_COGNITO_GET_CREDENTIALS, cognitoParameters, error, response, preCognitoDate);
     },
 
