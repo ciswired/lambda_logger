@@ -64,6 +64,7 @@ const LOG_TYPE_MONGO = 'mongo';
 const LOG_TYPE_LAMBDA = 'lambda';
 const LOG_TYPE_SNS = 'sns';
 const LOG_TYPE_COGNITO = 'cognito';
+const LOG_TYPE_PUBNUB = 'pubnub';
 
 const LOG_METHOD_LAMBDA_INVOKE = 'call';
 const LOG_METHOD_SNS = 'sns';
@@ -520,13 +521,87 @@ var cognitoLogger = {
 lambdaLogger.prototype.cognito = cognitoLogger;
 
 
+/** -------- PubNub SECTION ------------ */
+/**
+ *
+ * @type {{logRequest: pubNubLogger.logRequest, logPublishCallBack: pubNubLogger.logPublishCallBack, logPublishError: pubNubLogger.logPublishError}}
+ */
+var pubNubLogger = {
+
+    /**
+     *
+     * @param channel
+     * @param message
+     * @param method
+     * @param error
+     * @param result
+     * @param prePubNubDate
+     */
+    logRequest: function(channel, message, method, error, result, prePubNubDate) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_PUBNUB,
+                method: method,
+                startDateTime: prePubNubDate,
+                endDateTime: new Date(),
+                channel: channel,
+                message: message,
+                status: (error ? 'error' : 'success'),
+                pubnubError: error || null,
+                pubnubResponse: result || null
+            }
+        }));
+    },
+
+    /**
+     *
+     * @param channel
+     * @param message
+     * @param result
+     * @param prePubNubDate
+     */
+    logPublishCallBack: function(channel, message, result, prePubNubDate) {
+        this.logRequest(channel, message, 'publish', null, result, prePubNubDate);
+    },
+
+    /**
+     *
+     * @param channel
+     * @param message
+     * @param error
+     * @param prePubNubDate
+     */
+    logPublishError: function(channel, message, error, prePubNubDate) {
+        this.logRequest(channel, message, 'publish', error, null, prePubNubDate);
+    },
+
+    /**
+     *
+     * @param channel
+     * @param error
+     */
+    logWarning: function(channel, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_TYPE_PUBNUB,
+            'LAMBDA_WARNING: pubNub Error "' + channel + '"',
+            error
+        );
+    }
+};
+
+lambdaLogger.prototype.pubnub = pubNubLogger;
+
+
 /** -------- CONST SECTION ------------ */
 var constantsObject = Object.freeze({
     LOG_TYPE_AWS: LOG_TYPE_AWS,
     LOG_TYPE_MONGO: LOG_TYPE_MONGO,
     LOG_TYPE_LAMBDA: LOG_TYPE_LAMBDA,
     LOG_TYPE_SNS: LOG_TYPE_SNS,
-    LOG_TYPE_COGNITO: LOG_TYPE_COGNITO
+    LOG_TYPE_COGNITO: LOG_TYPE_COGNITO,
+    LOG_TYPE_PUBNUB: LOG_TYPE_PUBNUB
 });
 
 lambdaLogger.prototype.constants = constantsObject;
