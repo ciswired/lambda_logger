@@ -438,7 +438,7 @@ lambdaLogger.prototype.mongo = mongoLogger;
 
 /**
  * COGNITO Logger
- * @type {{logPublish: cognitoLogger.logGetId, logWarning: cognitoLogger.logWarning}}
+ * @type {{logGetId: cognitoLogger.logGetId, logWarning: cognitoLogger.logWarning}}
  */
 var cognitoLogger = {
     /**
