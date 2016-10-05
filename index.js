@@ -67,9 +67,14 @@ const LOG_TYPE_COGNITO = 'cognito';
 
 const LOG_METHOD_LAMBDA_INVOKE = 'call';
 const LOG_METHOD_SNS = 'sns';
+
 const LOG_METHOD_MONGO_GET = 'get';
 const LOG_METHOD_MONGO_POST = 'post';
 const LOG_METHOD_MONGO_PATCH = 'patch';
+
+const LOG_METHOD_COGNITO_GETID = 'getId';
+const LOG_METHOD_COGNITO_GETOPENID = 'getOpenIdTokenForDeveloperIdentity';
+
 
 /**
  * Lambda Logger
@@ -438,22 +443,23 @@ lambdaLogger.prototype.mongo = mongoLogger;
 
 /**
  * COGNITO Logger
- * @type {{logGetId: cognitoLogger.logGetId, logWarning: cognitoLogger.logWarning}}
+ * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logWarning: cognitoLogger.logWarning}}
  */
 var cognitoLogger = {
     /**
-     *
+     * Cognito log request
+     * @param cognito_method
      * @param cognitoParameters
      * @param error
-     * @param data
+     * @param response
      * @param preCognitoDate
      */
-    logGetId: function(cognitoParameters, error, response, preCognitoDate) {
+    logRequest: function(cognito_method, cognitoParameters, error, response, preCognitoDate) {
         "use strict";
         console.log(JSON.stringify({
             callData: {
                 type: LOG_TYPE_COGNITO,
-                method: 'getId',
+                method: cognito_method,
                 startDateTime: preCognitoDate,
                 endDateTime: new Date(),
                 cognitoParameters: cognitoParameters,
@@ -463,6 +469,27 @@ var cognitoLogger = {
         }));
     },
     /**
+     * Log "logGetId" request
+     * @param cognitoParameters
+     * @param error
+     * @param response
+     * @param preCognitoDate
+     */
+    logGetId: function(cognitoParameters, error, response, preCognitoDate) {
+        this.logRequest(LOG_METHOD_COGNITO_GETID, cognitoParameters, error, response, preCognitoDate);
+    },
+    /**
+     * Log "getOpenIdTokenForDeveloperIdentity" request
+     * @param cognitoParameters
+     * @param error
+     * @param response
+     * @param preCognitoDate
+     */
+    logGetOpenId: function(cognitoParameters, error, response, preCognitoDate) {
+        this.logRequest(LOG_METHOD_COGNITO_GETOPENID, cognitoParameters, error, response, preCognitoDate);
+    },
+
+    /**
      * Log COGNITO warning
      * @param cognitoParameters
      * @param error
@@ -471,7 +498,7 @@ var cognitoLogger = {
         "use strict";
         lambdaLogger.prototype.logWarning(
             LOG_TYPE_COGNITO,
-            'LAMBDA_WARNING: Error COGNITO "' + cognitoParameters.IdentityPoolId + '" poll',
+            'LAMBDA_WARNING: COGNITO Error',
             error
         );
     }
