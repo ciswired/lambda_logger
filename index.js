@@ -65,6 +65,8 @@ const LOG_TYPE_LAMBDA = 'lambda';
 const LOG_TYPE_SNS = 'sns';
 const LOG_TYPE_COGNITO = 'cognito';
 const LOG_TYPE_PUBNUB = 'pubnub';
+const LOG_TYPE_SES = 'pubnub';
+const LOG_TYPE_S3 = 'pubnub';
 
 const LOG_METHOD_LAMBDA_INVOKE = 'call';
 const LOG_METHOD_SNS = 'sns';
@@ -293,18 +295,36 @@ lambdaLogger.prototype.logLambdaWarning = function (lambdaParams, error) {
     );
 };
 
-
+/**
+ *
+ * @type {{logInvoke: lambdaFunctionsLogger.logInvoke, logWarning: lambdaFunctionsLogger.logWarning}}
+ */
 var lambdaFunctionsLogger = {
+    /**
+     *
+     * @param lambdaParams
+     * @param error
+     * @param data
+     * @param preLambdaDate
+     */
     logInvoke: function (lambdaParams, error, data, preLambdaDate) {
         "use strict";
         lambdaLogger.prototype.logLambdaInvoke(lambdaParams, error, data, preLambdaDate);
     },
+    /**
+     *
+     * @param lambdaParams
+     * @param error
+     */
     logWarning: function (lambdaParams, error) {
         "use strict";
         lambdaLogger.prototype.logLambdaWarning(lambdaParams, error);
     }
 };
-
+/**
+ *
+ * @type {{logInvoke: lambdaFunctionsLogger.logInvoke, logWarning: lambdaFunctionsLogger.logWarning}}
+ */
 lambdaLogger.prototype.lambda = lambdaFunctionsLogger;
 
 
@@ -353,6 +373,10 @@ var snsLogger = {
     }
 };
 
+/**
+ *
+ * @type {{logPublish: snsLogger.logPublish, logWarning: snsLogger.logWarning}}
+ */
 lambdaLogger.prototype.sns = snsLogger;
 
 
@@ -381,7 +405,7 @@ var mongoLogger = {
                 endDateTime: new Date(),
                 requestUri: requestConfig.uri,
                 requestHeaders: requestConfig.headers,
-                responseStatusCode: response ? response.statusCode : null,
+                responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                 responseError: error,
                 responseBody: body || response.body
             }
@@ -438,6 +462,10 @@ var mongoLogger = {
     }
 };
 
+/**
+ *
+ * @type {{logRequest: mongoLogger.logRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
+ */
 lambdaLogger.prototype.mongo = mongoLogger;
 
 
@@ -518,6 +546,10 @@ var cognitoLogger = {
     }
 };
 
+/**
+ *
+ * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logGetCredentials: cognitoLogger.logGetCredentials, logWarning: cognitoLogger.logWarning}}
+ */
 lambdaLogger.prototype.cognito = cognitoLogger;
 
 
@@ -591,8 +623,133 @@ var pubNubLogger = {
     }
 };
 
+/**
+ * 
+ * @type {{logRequest: pubNubLogger.logRequest, logPublishCallBack: pubNubLogger.logPublishCallBack, logPublishError: pubNubLogger.logPublishError, logWarning: pubNubLogger.logWarning}}
+ */
 lambdaLogger.prototype.pubnub = pubNubLogger;
 
+
+/** -------- SES SECTION ------------ */
+/**
+ * 
+ * @type {{logRequest: sesLogger.logRequest, logSendEmail: sesLogger.logSendEmail, logWarning: sesLogger.logWarning}}
+ */
+var sesLogger = {
+    /**
+     * 
+     * @param sesMessage
+     * @param method
+     * @param error
+     * @param data
+     * @param preSESDate
+     */
+    logRequest: function(sesMessage, method, error, data, preSESDate) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_SES,
+                method: method,
+                startDateTime: preSESDate,
+                endDateTime: new Date(),
+                sesMessage: sesMessage,
+                sesError: error,
+                sesResponse: data
+            }
+        }));
+    },
+    /**
+     * 
+     * @param sesMessage
+     * @param error
+     * @param data
+     * @param preSESDate
+     */
+    logSendEmail: function (sesMessage, error, data, preSESDate) {
+        this.logRequest(sesMessage, 'sendEmail', error, data, preSESDate);
+    },
+    
+    /**
+     * Log SES warning
+     * @param sesMessage
+     * @param error
+     */
+    logWarning: function(sesMessage, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_TYPE_SES,
+            'LAMBDA_WARNING: Error sending SES "' + sesMessage.Message.Subject + '" message',
+            error
+        );
+    }
+};
+
+/**
+ * 
+ * @type {{logRequest: sesLogger.logRequest, logSendEmail: sesLogger.logSendEmail, logWarning: sesLogger.logWarning}}
+ */
+lambdaLogger.prototype.ses = sesLogger;
+
+
+/** -------- S3 SECTION ------------ */
+/**
+ *
+ * @type {{logRequest: s3Logger.logRequest, logGetObject: s3Logger.logGetObject, logWarning: s3Logger.logWarning}}
+ */
+var s3Logger = {
+    /**
+     *
+     * @param s3Params
+     * @param method
+     * @param error
+     * @param data
+     * @param preS3Date
+     */
+    logRequest: function(s3Params, method, error, data, preS3Date) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_S3,
+                method: method,
+                startDateTime: preS3Date,
+                endDateTime: new Date(),
+                s3Params: s3Params,
+                s3Error: error,
+                s3Response: data
+            }
+        }));
+    },
+    /**
+     * logGetObject
+     * @param s3Params
+     * @param error
+     * @param data
+     * @param preS3Date
+     */
+    logGetObject: function (s3Params, error, data, preS3Date) {
+        this.logRequest(s3Params, 'getObject', error, data, preS3Date);
+    },
+
+    /**
+     * Log S3 warning
+     * @param s3Params
+     * @param error
+     */
+    logWarning: function(s3Params, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_TYPE_S3,
+            'LAMBDA_WARNING: Error S3 "' + s3Params.Bucket + '" bucket',
+            error
+        );
+    }
+};
+
+/**
+ *
+ * @type {{logRequest: s3Logger.logRequest, logGetObject: s3Logger.logGetObject, logWarning: s3Logger.logWarning}}
+ */
+lambdaLogger.prototype.s3 = s3Logger;
 
 /** -------- CONST SECTION ------------ */
 var constantsObject = Object.freeze({
@@ -601,9 +758,15 @@ var constantsObject = Object.freeze({
     LOG_TYPE_LAMBDA: LOG_TYPE_LAMBDA,
     LOG_TYPE_SNS: LOG_TYPE_SNS,
     LOG_TYPE_COGNITO: LOG_TYPE_COGNITO,
-    LOG_TYPE_PUBNUB: LOG_TYPE_PUBNUB
+    LOG_TYPE_PUBNUB: LOG_TYPE_PUBNUB,
+    LOG_TYPE_SES: LOG_TYPE_SES,
+    LOG_TYPE_S3: LOG_TYPE_S3
 });
 
+/**
+ * 
+ * @type {Object}
+ */
 lambdaLogger.prototype.constants = constantsObject;
 
 module.exports = lambdaLogger;
