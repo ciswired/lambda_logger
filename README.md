@@ -112,6 +112,36 @@ Handles logging from lambda functions
 
 ### Warning
   logger.pubnub.logWarning(pubNubChannel, error);
+
+## SES
+
+### Publish
+  Define:
+  var preSESDate = new Date();
+  var sesMessage = {
+    ...
+  };
+
+  sendEmail Result:
+  logger.ses.logSendEmail(sesMessage, error, data, preSESDate);
+
+### Warning
+  logger.ses.logWarning(sesMessage, error);
+
+## S3
+
+### Publish
+  Define:
+  var preS3Date = new Date();
+  var s3Params = {
+    ...
+  };
+
+  getObject Result:
+  logger.s3.logGetObject(s3Params, error, data, preS3Date);
+
+### Warning
+  logger.s3.logWarning(s3Params, error);
   
 
 
