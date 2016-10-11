@@ -115,14 +115,14 @@ Handles logging from lambda functions
 
 ## SES
 
-### Publish
+### sendEmail
   Define:
   var preSESDate = new Date();
   var sesMessage = {
     ...
   };
 
-  sendEmail Result:
+  Result:
   logger.ses.logSendEmail(sesMessage, error, data, preSESDate);
 
 ### Warning
@@ -130,14 +130,14 @@ Handles logging from lambda functions
 
 ## S3
 
-### Publish
+### getObject
   Define:
   var preS3Date = new Date();
   var s3Params = {
     ...
   };
 
-  getObject Result:
+  Result:
   logger.s3.logGetObject(s3Params, error, data, preS3Date);
 
 ### Warning
