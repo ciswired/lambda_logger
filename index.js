@@ -65,8 +65,8 @@ const LOG_TYPE_LAMBDA = 'lambda';
 const LOG_TYPE_SNS = 'sns';
 const LOG_TYPE_COGNITO = 'cognito';
 const LOG_TYPE_PUBNUB = 'pubnub';
-const LOG_TYPE_SES = 'pubnub';
-const LOG_TYPE_S3 = 'pubnub';
+const LOG_TYPE_SES = 'ses';
+const LOG_TYPE_S3 = 's3';
 
 const LOG_METHOD_LAMBDA_INVOKE = 'call';
 const LOG_METHOD_SNS = 'sns';
@@ -101,18 +101,18 @@ var lambdaLogger = function (event, context, detailed) {
     };
 
     if (detailed && detailed === true) {
-        var headerString = event.inputParams;
+        var headerString = event.inputParams || null;
         if (headerString && headerString.length > 0) {
             var startPosition = headerString.toLowerCase().indexOf("accept=");
             if (startPosition > -1) lambdaLogger.prototype.inData.inData.acceptString = headerString.substring(startPosition + 7, headerString.indexOf(',', startPosition));
             startPosition = headerString.toLowerCase().indexOf("cloudfront-is-desktop-viewer=");
-            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isDesktop = headerString.substring(startPosition + 29, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isDesktop = headerString.substring(startPosition + 29, headerString.indexOf(',', startPosition)) === 'true';
             startPosition = headerString.toLowerCase().indexOf("cloudfront-is-mobile-viewer=");
-            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isMobile = headerString.substring(startPosition + 28, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isMobile = headerString.substring(startPosition + 28, headerString.indexOf(',', startPosition)) === 'true';
             startPosition = headerString.toLowerCase().indexOf("cloudfront-is-smarttv-viewer=");
-            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isSmartTV = headerString.substring(startPosition + 29, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isSmartTV = headerString.substring(startPosition + 29, headerString.indexOf(',', startPosition)) === 'true';
             startPosition = headerString.toLowerCase().indexOf("cloudfront-is-tablet-viewer=");
-            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isTablet = headerString.substring(startPosition + 28, headerString.indexOf(',', startPosition)) === 'true' ? true : false;
+            if (startPosition > -1) lambdaLogger.prototype.inData.inData.isTablet = headerString.substring(startPosition + 28, headerString.indexOf(',', startPosition)) === 'true';
             startPosition = headerString.toLowerCase().indexOf("cloudfront-viewer-country=");
             if (startPosition > -1) lambdaLogger.prototype.inData.inData.countryCode = headerString.substring(startPosition + 26, headerString.indexOf(',', startPosition));
             startPosition = headerString.toLowerCase().indexOf("content-type=");
@@ -321,10 +321,7 @@ var lambdaFunctionsLogger = {
         lambdaLogger.prototype.logLambdaWarning(lambdaParams, error);
     }
 };
-/**
- *
- * @type {{logInvoke: lambdaFunctionsLogger.logInvoke, logWarning: lambdaFunctionsLogger.logWarning}}
- */
+
 lambdaLogger.prototype.lambda = lambdaFunctionsLogger;
 
 
@@ -373,10 +370,7 @@ var snsLogger = {
     }
 };
 
-/**
- *
- * @type {{logPublish: snsLogger.logPublish, logWarning: snsLogger.logWarning}}
- */
+
 lambdaLogger.prototype.sns = snsLogger;
 
 
@@ -462,10 +456,6 @@ var mongoLogger = {
     }
 };
 
-/**
- *
- * @type {{logRequest: mongoLogger.logRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
- */
 lambdaLogger.prototype.mongo = mongoLogger;
 
 
@@ -546,10 +536,7 @@ var cognitoLogger = {
     }
 };
 
-/**
- *
- * @type {{logRequest: cognitoLogger.logRequest, logGetId: cognitoLogger.logGetId, logGetOpenId: cognitoLogger.logGetOpenId, logGetCredentials: cognitoLogger.logGetCredentials, logWarning: cognitoLogger.logWarning}}
- */
+
 lambdaLogger.prototype.cognito = cognitoLogger;
 
 
@@ -623,10 +610,6 @@ var pubNubLogger = {
     }
 };
 
-/**
- * 
- * @type {{logRequest: pubNubLogger.logRequest, logPublishCallBack: pubNubLogger.logPublishCallBack, logPublishError: pubNubLogger.logPublishError, logWarning: pubNubLogger.logWarning}}
- */
 lambdaLogger.prototype.pubnub = pubNubLogger;
 
 
@@ -684,10 +667,7 @@ var sesLogger = {
     }
 };
 
-/**
- * 
- * @type {{logRequest: sesLogger.logRequest, logSendEmail: sesLogger.logSendEmail, logWarning: sesLogger.logWarning}}
- */
+
 lambdaLogger.prototype.ses = sesLogger;
 
 
@@ -745,10 +725,6 @@ var s3Logger = {
     }
 };
 
-/**
- *
- * @type {{logRequest: s3Logger.logRequest, logGetObject: s3Logger.logGetObject, logWarning: s3Logger.logWarning}}
- */
 lambdaLogger.prototype.s3 = s3Logger;
 
 /** -------- CONST SECTION ------------ */
