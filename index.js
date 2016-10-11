@@ -165,7 +165,7 @@ lambdaLogger.prototype.done = function done(error, result) {
     if (error) {
         lambdaLogger.prototype.fail(error, result);
     } else {
-        lambdaLogger.prototype.succeed(error, result);
+        lambdaLogger.prototype.succeed(result);
     }
 };
 
@@ -199,10 +199,9 @@ lambdaLogger.prototype.fail = function (error, result, outPayload) {
 
 /**
  * Lambda context succeed handler
- * @param error
  * @param result
  */
-lambdaLogger.prototype.succeed = function (error, result) {
+lambdaLogger.prototype.succeed = function (result) {
     "use strict";
     lambdaLogger.prototype.outData.outData = Object.assign(
         lambdaLogger.prototype.outData.outData,
