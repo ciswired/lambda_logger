@@ -425,7 +425,7 @@ var mongoLogger = {
                 requestHeaders: requestConfig.headers,
                 responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                 responseError: error,
-                responseBodyReturned: response.body._returned || JSON.parse(response.body)._returned
+                responseBodyReturned: (error ? response.body : (response.body._returned || JSON.parse(response.body)._returned))
             }
         }));
     },
