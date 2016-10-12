@@ -375,8 +375,8 @@ lambdaLogger.prototype.sns = snsLogger;
 
 /** -------- MONGO SECTION ------------ */
 /**
- *
- * @type {{logRequest: mongoLogger.logRequest, logBigRequest: mongoLogger.logBigRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
+ * Mongo logger
+ * @type {{logRequest: mongoLogger.logRequest, logBigRequest: mongoLogger.logBigRequest, logBigGetRequest: mongoLogger.logBigGetRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
  */
 var mongoLogger = {
     /**
@@ -428,6 +428,18 @@ var mongoLogger = {
                 responseBodyReturned: response.body._returned || JSON.parse(response.body)._returned
             }
         }));
+    },
+    /**
+     *
+     * @param requestConfig
+     * @param error
+     * @param response
+     * @param body
+     * @param preQueryDate
+     */
+    logBigGetRequest: function (requestConfig, error, response, body, preQueryDate) {
+        "use strict";
+        this.logBigRequest(requestConfig, LOG_METHOD_MONGO_GET, error, response, body, preQueryDate);
     },
     /**
      * Log GET requests
