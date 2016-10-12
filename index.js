@@ -375,8 +375,8 @@ lambdaLogger.prototype.sns = snsLogger;
 
 /** -------- MONGO SECTION ------------ */
 /**
- * Logger for mongo
- * @type {{logRequest: mongoLogger.logRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
+ *
+ * @type {{logRequest: mongoLogger.logRequest, logBigRequest: mongoLogger.logBigRequest, logGetRequest: mongoLogger.logGetRequest, logPostRequest: mongoLogger.logPostRequest, logPatchRequest: mongoLogger.logPatchRequest, logWarning: mongoLogger.logWarning}}
  */
 var mongoLogger = {
     /**
@@ -401,6 +401,31 @@ var mongoLogger = {
                 responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                 responseError: error,
                 responseBody: body || response.body
+            }
+        }));
+    },
+    /**
+     *
+     * @param requestConfig
+     * @param method
+     * @param error
+     * @param response
+     * @param body
+     * @param preQueryDate
+     */
+    logBigRequest: function(requestConfig, method, error, response, body, preQueryDate) {
+        "use strict";
+        console.log(JSON.stringify({
+            callData: {
+                type: LOG_TYPE_MONGO,
+                method: method,
+                startDateTime: preQueryDate,
+                endDateTime: new Date(),
+                requestUri: requestConfig.uri,
+                requestHeaders: requestConfig.headers,
+                responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
+                responseError: error,
+                responseBodyReturned: response.body._returned || 0
             }
         }));
     },
