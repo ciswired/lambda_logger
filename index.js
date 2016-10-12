@@ -415,6 +415,17 @@ var mongoLogger = {
      */
     logBigRequest: function(requestConfig, method, error, response, body, preQueryDate) {
         "use strict";
+
+        var returnedCount = 0;
+        if (!error && response.body) {
+            if (response.body.hasOwnProperty('_returned') === false && typeof response.body === 'string' && response.body.length > 0) {
+                response.body = JSON.parse(response.body);
+            }
+            if (response.body.hasOwnProperty('_returned')) {
+                returnedCount = response.body._returned;
+            }
+        }
+
         console.log(JSON.stringify({
             callData: {
                 type: LOG_TYPE_MONGO,
@@ -425,7 +436,7 @@ var mongoLogger = {
                 requestHeaders: requestConfig.headers,
                 responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                 responseError: error,
-                responseBodyReturned: (error ? response.body : (response.body._returned || JSON.parse(response.body)._returned))
+                responseBodyReturned: returnedCount
             }
         }));
     },
