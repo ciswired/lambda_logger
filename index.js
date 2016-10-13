@@ -419,11 +419,12 @@ var mongoLogger = {
 
         var returnedCount = 0;
         if (!error && response.body) {
+            var tmpBody = response.body;
             if (response.body.hasOwnProperty('_returned') === false && typeof response.body === 'string' && response.body.length > 0) {
-                response.body = JSON.parse(response.body);
+                tmpBody = JSON.parse(response.body);
             }
-            if (response.body.hasOwnProperty('_returned')) {
-                returnedCount = response.body._returned;
+            if (tmpBody.hasOwnProperty('_returned')) {
+                returnedCount = tmpBody._returned;
             }
         }
 
