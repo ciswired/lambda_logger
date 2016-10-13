@@ -398,6 +398,7 @@ var mongoLogger = {
                 endDateTime: new Date(),
                 requestUri: requestConfig.uri,
                 requestHeaders: requestConfig.headers,
+                requestBody: requestConfig.body || null,
                 responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                 responseError: error,
                 responseBody: body || response.body
