@@ -797,7 +797,7 @@ lambdaLogger.prototype.constants = constantsObject;
 
 /**
  * Useful utils
- * @type {{buildQueryString: utils.buildQueryString, objectsMerge: utils.objectsMerge}}
+ * @type {{buildQueryString: utils.buildQueryString, objectsMerge: utils.objectsMerge, escapeRegExp: utils.escapeRegExp}}
  */
 var utils = {
 
@@ -867,7 +867,12 @@ var utils = {
             }
         }
         return to;
+    },
+    escapeRegExp: function (string){
+        // return encodeURIComponent(string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"));
+        return encodeURIComponent(string);
     }
+
 };
 
 lambdaLogger.prototype.utils = utils;
