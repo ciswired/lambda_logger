@@ -868,6 +868,12 @@ var utils = {
         }
         return to;
     },
+
+    /**
+     * Escape string for restHeart $regex queries
+     * @param string
+     * @returns {string}
+     */
     escapeRegExp: function (string){
         // return encodeURIComponent(string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1"));
         return encodeURIComponent(string);
