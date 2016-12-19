@@ -18,6 +18,11 @@
  logger.logWarning(logger.constants.LOG_TYPE_SNS, 'Unable to publish', error);
 
 
+--- LOG LEVELS (process.env.logLevel)
+- info (only start and done messages)
+- error (start, done and error messages)
+- verbose (all)
+
  ------------- LAMBDA --------------
 
  var preLambdaDate = new Date();
@@ -90,6 +95,7 @@ var lambdaLogger = function (event, context, detailed) {
     "use strict";
     lambdaLogger.prototype.event = event;
     lambdaLogger.prototype.context = context;
+    lambdaLogger.prototype.logLevel = process.env.logLevel ? process.env.logLevel : 'info';
 
     lambdaLogger.prototype.inData = {
         inData: {
@@ -152,7 +158,7 @@ var lambdaLogger = function (event, context, detailed) {
         lambdaLogger.prototype.metaData.metaData.startDateTime = lambdaLogger.prototype.inData.inData.startDateTime;
         lambdaLogger.prototype.metaData.metaData.endDateTime = new Date();
         console.log(JSON.stringify(lambdaLogger.prototype.metaData));
-    }
+    };
 };
 
 /**
@@ -225,16 +231,21 @@ lambdaLogger.prototype.succeed = function (result) {
  */
 lambdaLogger.prototype.logStartFunction = function (functionName, params) {
     "use strict";
-    if (params) {
+
+    if (lambdaLogger.prototype.logLevel == 'verbose') {
+      if (params) {
         console.log(util.format('RUN "%s"; PARAMS: %j', functionName, params));
-    } else {
+      } else {
         console.log(util.format('RUN "%s"', functionName));
+      }
     }
 };
 
 lambdaLogger.prototype.logSimpleMessage = function () {
     "use strict";
-    console.log.apply(this, arguments);
+    if (lambdaLogger.prototype.logLevel == 'verbose') {
+      console.log.apply(this, arguments);
+    }
 };
 
 /** -------- LAMBDAS SECTION ------------ */
@@ -247,6 +258,8 @@ lambdaLogger.prototype.logSimpleMessage = function () {
  */
 lambdaLogger.prototype.logLambdaInvoke = function logLambdaInvoke(lambdaParams, error, data, preLambdaDate) {
     "use strict";
+    if (lambdaLogger.prototype.logLevel == 'verbose' ||
+        (lambdaLogger.prototype.logLevel == 'error' && error)) {
     console.log(JSON.stringify({
         callData: {
             type: LOG_TYPE_LAMBDA,
@@ -260,6 +273,7 @@ lambdaLogger.prototype.logLambdaInvoke = function logLambdaInvoke(lambdaParams, 
             lambdaData: data
         }
     }));
+  }
 };
 
 /**
@@ -340,19 +354,22 @@ var snsLogger = {
      */
     logPublish: function(snsMessage, error, data, preSNSDate) {
         "use strict";
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_AWS,
-                method: LOG_METHOD_SNS,
-                startDateTime: preSNSDate,
-                endDateTime: new Date(),
-                topicArn: snsMessage.TopicArn,
-                snsMessage: snsMessage.Message,
-                snsSubject: snsMessage.Subject,
-                snsError: error,
-                snsResponse: data
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_AWS,
+                  method: LOG_METHOD_SNS,
+                  startDateTime: preSNSDate,
+                  endDateTime: new Date(),
+                  topicArn: snsMessage.TopicArn,
+                  snsMessage: snsMessage.Message,
+                  snsSubject: snsMessage.Subject,
+                  snsError: error,
+                  snsResponse: data
+              }
+          }));
+      }
     },
     /**
      * Log SNS warning
@@ -368,7 +385,6 @@ var snsLogger = {
         );
     }
 };
-
 
 lambdaLogger.prototype.sns = snsLogger;
 
@@ -390,20 +406,23 @@ var mongoLogger = {
      */
     logRequest: function(requestConfig, method, error, response, body, preQueryDate) {
         "use strict";
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_MONGO,
-                method: method,
-                startDateTime: preQueryDate,
-                endDateTime: new Date(),
-                requestUri: requestConfig.uri,
-                requestHeaders: requestConfig.headers,
-                requestBody: requestConfig.body || null,
-                responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
-                responseError: error,
-                responseBody: body || response.body
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_MONGO,
+                  method: method,
+                  startDateTime: preQueryDate,
+                  endDateTime: new Date(),
+                  requestUri: requestConfig.uri,
+                  requestHeaders: requestConfig.headers,
+                  requestBody: requestConfig.body || null,
+                  responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
+                  responseError: error,
+                  responseBody: body || response.body
+              }
+          }));
+        }
     },
     /**
      *
@@ -428,19 +447,22 @@ var mongoLogger = {
             }
         }
 
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_MONGO,
-                method: method,
-                startDateTime: preQueryDate,
-                endDateTime: new Date(),
-                requestUri: requestConfig.uri,
-                requestHeaders: requestConfig.headers,
-                responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
-                responseError: error,
-                responseBodyReturned: returnedCount
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_MONGO,
+                  method: method,
+                  startDateTime: preQueryDate,
+                  endDateTime: new Date(),
+                  requestUri: requestConfig.uri,
+                  requestHeaders: requestConfig.headers,
+                  responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
+                  responseError: error,
+                  responseBodyReturned: returnedCount
+              }
+          }));
+        }
     },
     /**
      *
@@ -525,17 +547,20 @@ var cognitoLogger = {
      */
     logRequest: function(cognito_method, cognitoParameters, error, response, preCognitoDate) {
         "use strict";
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_COGNITO,
-                method: cognito_method,
-                startDateTime: preCognitoDate,
-                endDateTime: new Date(),
-                cognitoParameters: cognitoParameters,
-                cognitoError: error,
-                cogniroResponse: response
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_COGNITO,
+                  method: cognito_method,
+                  startDateTime: preCognitoDate,
+                  endDateTime: new Date(),
+                  cognitoParameters: cognitoParameters,
+                  cognitoError: error,
+                  cogniroResponse: response
+              }
+          }));
+        }
     },
     /**
      * Log "logGetId" request
@@ -607,19 +632,22 @@ var pubNubLogger = {
      */
     logRequest: function(channel, message, method, error, result, prePubNubDate) {
         "use strict";
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_PUBNUB,
-                method: method,
-                startDateTime: prePubNubDate,
-                endDateTime: new Date(),
-                channel: channel,
-                message: message,
-                status: (error ? 'error' : 'success'),
-                pubnubError: error || null,
-                pubnubResponse: result || null
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_PUBNUB,
+                  method: method,
+                  startDateTime: prePubNubDate,
+                  endDateTime: new Date(),
+                  channel: channel,
+                  message: message,
+                  status: (error ? 'error' : 'success'),
+                  pubnubError: error || null,
+                  pubnubResponse: result || null
+              }
+          }));
+        }
     },
 
     /**
@@ -664,12 +692,12 @@ lambdaLogger.prototype.pubnub = pubNubLogger;
 
 /** -------- SES SECTION ------------ */
 /**
- * 
+ *
  * @type {{logRequest: sesLogger.logRequest, logSendEmail: sesLogger.logSendEmail, logWarning: sesLogger.logWarning}}
  */
 var sesLogger = {
     /**
-     * 
+     *
      * @param sesMessage
      * @param method
      * @param error
@@ -678,20 +706,23 @@ var sesLogger = {
      */
     logRequest: function(sesMessage, method, error, data, preSESDate) {
         "use strict";
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_SES,
-                method: method,
-                startDateTime: preSESDate,
-                endDateTime: new Date(),
-                sesMessage: sesMessage,
-                sesError: error,
-                sesResponse: data
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_SES,
+                  method: method,
+                  startDateTime: preSESDate,
+                  endDateTime: new Date(),
+                  sesMessage: sesMessage,
+                  sesError: error,
+                  sesResponse: data
+              }
+          }));
+        }
     },
     /**
-     * 
+     *
      * @param sesMessage
      * @param error
      * @param data
@@ -700,7 +731,7 @@ var sesLogger = {
     logSendEmail: function (sesMessage, error, data, preSESDate) {
         this.logRequest(sesMessage, 'sendEmail', error, data, preSESDate);
     },
-    
+
     /**
      * Log SES warning
      * @param sesMessage
@@ -736,17 +767,20 @@ var s3Logger = {
      */
     logRequest: function(s3Params, method, error, data, preS3Date) {
         "use strict";
-        console.log(JSON.stringify({
-            callData: {
-                type: LOG_TYPE_S3,
-                method: method,
-                startDateTime: preS3Date,
-                endDateTime: new Date(),
-                s3Params: s3Params,
-                s3Error: error,
-                s3Response: data
-            }
-        }));
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_S3,
+                  method: method,
+                  startDateTime: preS3Date,
+                  endDateTime: new Date(),
+                  s3Params: s3Params,
+                  s3Error: error,
+                  s3Response: data
+              }
+          }));
+        }
     },
     /**
      * logGetObject
@@ -789,7 +823,7 @@ var constantsObject = Object.freeze({
 });
 
 /**
- * 
+ *
  * @type {Object}
  */
 lambdaLogger.prototype.constants = constantsObject;
