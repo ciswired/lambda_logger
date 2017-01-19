@@ -419,7 +419,7 @@ var mongoLogger = {
                   requestBody: requestConfig.body || null,
                   responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                   responseError: error,
-                  responseBody: body || response.body ? response.body : null
+                  responseBody: body || response ? response.body : null
               }
           }));
         }
