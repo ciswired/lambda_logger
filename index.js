@@ -72,6 +72,7 @@ const LOG_TYPE_COGNITO = 'cognito';
 const LOG_TYPE_PUBNUB = 'pubnub';
 const LOG_TYPE_SES = 'ses';
 const LOG_TYPE_S3 = 's3';
+const LOG_TYPE_CW = 'cloudwatch';
 
 const LOG_METHOD_LAMBDA_INVOKE = 'call';
 const LOG_METHOD_SNS = 'sns';
@@ -79,6 +80,9 @@ const LOG_METHOD_SNS = 'sns';
 const LOG_METHOD_MONGO_GET = 'get';
 const LOG_METHOD_MONGO_POST = 'post';
 const LOG_METHOD_MONGO_PATCH = 'patch';
+const LOG_METHOD_MONGO_PUT = 'put';
+
+const LOG_METHOD_CW_PUT_METRIC = 'putMetric';
 
 const LOG_METHOD_COGNITO_GET_ID = 'getId';
 const LOG_METHOD_COGNITO_GET_OPENID = 'getOpenIdTokenForDeveloperIdentity';
@@ -389,6 +393,54 @@ var snsLogger = {
 lambdaLogger.prototype.sns = snsLogger;
 
 
+/** -------- CW SECTION ------------ */
+
+/**
+ * CW Logger
+ * @type {{logPutMetric: cwLogger.logPutMetric, logWarning: cwLogger.logWarning}}
+ */
+var cwLogger = {
+    /**
+     *
+     * @param cwParams
+     * @param error
+     * @param data
+     * @param preCWDate
+     */
+    logPutMetric: function(cwParams, error, data, preCWDate) {
+        "use strict";
+        if (lambdaLogger.prototype.logLevel == 'verbose' ||
+            (lambdaLogger.prototype.logLevel == 'error' && error)) {
+          console.log(JSON.stringify({
+              callData: {
+                  type: LOG_TYPE_CW,
+                  method: LOG_METHOD_CW_PUT_METRIC,
+                  startDateTime: preCWDate,
+                  endDateTime: new Date(),
+                  cwParams: cwParams,
+                  cwError: error,
+                  cwResponse: data
+              }
+          }));
+      }
+    },
+    /**
+     * Log SNS warning
+     * @param snsMessage
+     * @param error
+     */
+    logWarning: function(cwMessage, error) {
+        "use strict";
+        lambdaLogger.prototype.logWarning(
+            LOG_METHOD_CW_PUT_METRIC,
+            'LAMBDA_WARNING: Error writing metric ' + cwMessage.MetricName,
+            error
+        );
+    }
+};
+
+lambdaLogger.prototype.cw = cwLogger;
+
 /** -------- MONGO SECTION ------------ */
 /**
  * Mongo logger
@@ -513,6 +565,18 @@ var mongoLogger = {
         this.logRequest(requestConfig, LOG_METHOD_MONGO_PATCH, error, response, body, preQueryDate);
     },
     /**
+     * Log Put requests
+     * @param requestConfig
+     * @param error
+     * @param response
+     * @param body
+     * @param prePutDate
+     */
+    logPutRequest: function (requestConfig, error, response, body, prePutDate) {
+        "use strict";
+        this.logRequest(requestConfig, LOG_METHOD_MONGO_PUT, error, response, body, prePutDate);
+    },
+    /**
      * Log Mongo warning
      * @param requestConfig
      * @param error
@@ -528,7 +592,6 @@ var mongoLogger = {
 };
 
 lambdaLogger.prototype.mongo = mongoLogger;
-
 
 /** -------- COGNITO SECTION ------------ */
 
