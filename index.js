@@ -583,11 +583,20 @@ var mongoLogger = {
      */
     logWarning: function(requestConfig, error) {
         "use strict";
-        lambdaLogger.prototype.logWarning(
-            LOG_TYPE_MONGO,
-            'LAMBDA_WARNING: Error DB "' + requestConfig.uri + '" request',
-            error
-        );
+        if (requestConfig.uri) {
+          lambdaLogger.prototype.logWarning(
+              LOG_TYPE_MONGO,
+              'LAMBDA_WARNING: Error DB "' + requestConfig.uri + '" request',
+              error
+          );
+        }
+        else {
+          lambdaLogger.prototype.logWarning(
+              LOG_TYPE_MONGO,
+              'LAMBDA_WARNING: ' + requestConfig.message,
+              error
+          );
+        }
     }
 };
 
