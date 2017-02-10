@@ -460,6 +460,11 @@ var mongoLogger = {
         "use strict";
         if (lambdaLogger.prototype.logLevel == 'verbose' ||
             (lambdaLogger.prototype.logLevel == 'error' && error)) {
+
+          var responseBody = null;
+          if (body) responseBody = body;
+          else if (response && response.body) responseBody = response.body;
+
           console.log(JSON.stringify({
               callData: {
                   type: LOG_TYPE_MONGO,
@@ -471,7 +476,7 @@ var mongoLogger = {
                   requestBody: requestConfig.body || null,
                   responseStatusCode: response && response.hasOwnProperty('statusCode') ? response.statusCode : null,
                   responseError: error,
-                  responseBody: body || response ? response.body : null
+                  responseBody: responseBody
               }
           }));
         }
